@@ -84,19 +84,17 @@ function cleanPhoneNumber(phone: string): string {
 function validatePhoneNumber(phone: string): boolean {
   if (!phone) return false;
 
-  // Try to parse the phone number without specifying a country code
-  //   const phoneNumber = parsePhoneNumberFromString(phone);
+  // Try to parse the phone number with the default country code (US)
+  let phoneNumber = parsePhoneNumberFromString(phone, "US");
 
-  // Check if the phone number is valid
-  if (isValidPhoneNumber(phone) === true) {
-    return true;
-  } else {
-    return false;
+  // If the phone number is not valid, try to parse it without specifying a country code
+  if (!phoneNumber || !phoneNumber.isValid()) {
+    phoneNumber = parsePhoneNumberFromString(phone);
   }
 
-  //   return phoneNumber ? phoneNumber.isValid() : false;
+  // Check if the phone number is valid
+  return phoneNumber ? phoneNumber.isValid() : false;
 }
-
 // New function to process the Excel file for phone numbers
 async function processPhoneNumbers(filePath: string) {
   // Resolve the absolute path
@@ -241,6 +239,44 @@ async function processStateCountry(filePath: string) {
   xlsx.writeFile(workbook, absolutePath);
 }
 
+// Function to count rows with both specified columns having the value true
+async function countRowsWithBothColumnsTrue(
+  filePath: string,
+  col1Index: number,
+  col2Index: number
+): Promise<number> {
+  // Resolve the absolute path
+  const absolutePath = path.resolve(__dirname, filePath);
+
+  // Read the Excel file
+  const workbook = xlsx.readFile(absolutePath);
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+
+  // Convert the worksheet to JSON
+  const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+
+  // Initialize the counter
+  let count = 0;
+
+  // Iterate through the rows and count the rows with both columns true
+  for (let i = 1; i < data.length; i++) {
+    // @ts-expect-error
+    const col1Value = data[i][col1Index];
+    // @ts-expect-error
+    const col2Value = data[i][col2Index];
+
+    if (col1Value === true && col2Value === true) {
+      count++;
+    }
+  }
+
+  console.log(count);
+  return count;
+}
+
+// Example usage
+
 // Main function to call both email validation and phone number cleaning
 async function main() {
   const testRunFilePath =
@@ -248,10 +284,18 @@ async function main() {
   const fullMiningList =
     "/Users/ve/fractional_cto_projects/gold_terra_mining/data/gold_terra_mining_list.xlsx";
 
+  const col1Index = 3; // Index of the first column to check
+  const col2Index = 9; // Index of the second column to check
+
   try {
     // await processEmails(testRunFilePath);
-    await processPhoneNumbers(fullMiningList);
+    // await processPhoneNumbers(fullMiningList);
     // await processStateCountry(fullMiningList);
+    const count = await countRowsWithBothColumnsTrue(
+      fullMiningList,
+      col1Index,
+      col2Index
+    );
 
     console.log(
       "Email validation and phone number cleaning completed and results saved."
