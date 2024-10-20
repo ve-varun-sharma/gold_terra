@@ -4,6 +4,7 @@ import * as path from "path";
 import {
   parsePhoneNumberFromString,
   type CountryCode,
+  isValidPhoneNumber,
 } from "libphonenumber-js";
 
 import {
@@ -84,10 +85,16 @@ function validatePhoneNumber(phone: string): boolean {
   if (!phone) return false;
 
   // Try to parse the phone number without specifying a country code
-  const phoneNumber = parsePhoneNumberFromString(phone);
+  //   const phoneNumber = parsePhoneNumberFromString(phone);
 
   // Check if the phone number is valid
-  return phoneNumber ? phoneNumber.isValid() : false;
+  if (isValidPhoneNumber(phone) === true) {
+    return true;
+  } else {
+    return false;
+  }
+
+  //   return phoneNumber ? phoneNumber.isValid() : false;
 }
 
 // New function to process the Excel file for phone numbers
